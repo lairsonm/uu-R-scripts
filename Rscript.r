@@ -22,7 +22,7 @@ dataFrame <- fullData$dat
 workingData <- dataFrame
 
 #Creating the days
-workingData$datetimenew <- as.POSIXlt(as.numeric(workingData[,5]),origin = "2017-01-09 01:13:37",tz = "GMT")
+workingData$datetimenew <- as.POSIXct(as.numeric(workingData[,5]),origin = "2017-01-09 01:13:37",tz = "GMT")
 
 #Creating the time grouping(dawn, morning, afternoon, evening, night)
 workingData$createddatetime <- as.POSIXct(as.numeric(workingData[,5]),origin = "2017-01-09 01:13:37",tz = "GMT")
@@ -40,4 +40,38 @@ holidaysData$createddate <- as.POSIXct(holidaysData$createddate)
 
 #left join the data
 labelledData <- merge(workingData, holidaysData, by="createddate", all.x=TRUE)
+
+#Group by user
+group_by_user <- group_by(labelledData, user_id)
+
+#Summarise the grouping
+count_right_answers <- summarise(group_by_user,
+                                 number_of_excercises = n(),
+                                 correct_answers = sum(correct_answered==1),
+                                 ratio_right_answers = (correct_answers / number_of_excercises) * 100
+)
+
+#creating the graph with table, X and Y axis
+graph = ggplot(count_right_answers, aes(x=number_of_excercises, y=correct_answers))
+
+#Printing the graph with points and color ratio 
+graph+geom_point(aes(col=ratio_right_answers))
+
+
+#Group by day
+group_by_date <- group_by(labelledData, createddate)
+
+#Summarise the grouping
+count_right_answers_date <- summarise(group_by_date,
+                                 holiday = mean(sure),
+                                 number_of_excercises = n(),
+                                 correct_answers = sum(correct_answered==1),
+                                 ratio_right_answers = (correct_answers / number_of_excercises) * 100
+)
+
+#creating the graph with table, X and Y axis
+graph = ggplot(count_right_answers_date, aes(x=createddate, y=ratio_right_answers))
+
+graph+geom_point(aes(col=ifelse(holiday==1, 'Holiday', 'Not Holiday')))
+
 
