@@ -8,6 +8,7 @@ library(sqldf)
 library(ggplot2)
 library(tidyverse)
 library(lubridate)
+library(scales)
 
 #disable cientific notation
 options(scipen=999)
@@ -73,5 +74,37 @@ count_right_answers_date <- summarise(group_by_date,
 graph = ggplot(count_right_answers_date, aes(x=createddate, y=ratio_right_answers))
 
 graph+geom_point(aes(col=ifelse(holiday==1, 'Holiday', 'Not Holiday')))
+
+#get number of excercises per person per day
+teste <- labelledData %>%
+  group_by(user_id, createddate) %>%
+  summarise(total_excercises = n(),
+            mean_excercises = mean(n()))
+
+#getting the may holidays
+mayHolidays <- filter(labelledData, createddate > "2017-04-05" & createddate < "2017-05-15")
+
+#group by date and user
+may_group_by_date_user <- mayHolidays %>%
+  group_by(user_id, createddate) %>%
+  summarise(holiday = mean(sure),
+            number_of_excercises = n(),
+            correct_answers = sum(correct_answered==1),
+            ratio_right_answers = (correct_answers / number_of_excercises) * 100
+  )
+
+#group by date
+may_group_by_date <- mayHolidays %>%
+  group_by(createddate) %>%
+  summarise(holiday = mean(sure),
+            number_of_excercises = n(),
+            correct_answers = sum(correct_answered==1),
+            ratio_right_answers = (correct_answers / number_of_excercises) * 100
+  )
+
+#creating the graph with table, X and Y axis
+graph2 = ggplot(may_group_by_date, aes(x=createddate, y=ratio_right_answers, fill=holiday))
+
+graph2+geom_bar(stat = "identity")+ scale_y_continuous(limits=c(70,77),oob = rescale_none)
 
 
