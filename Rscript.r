@@ -108,3 +108,50 @@ graph2 = ggplot(may_group_by_date, aes(x=createddate, y=ratio_right_answers, fil
 graph2+geom_bar(stat = "identity")+ scale_y_continuous(limits=c(70,77),oob = rescale_none)
 
 
+############################YULIE IS HERE LALALA########################################
+
+#after we decide the real each task
+#take students who practice in vacation
+
+#isolate christmas
+christmasData <- labelledData[labelledData[, "holiday"] =="christmas holiday",]
+tempchristmas <- ddply(christmasData,~user_id,summarise,number_of_response=length(unique(created)))
+tempchristmas1 <- filter(tempchristmas, number_of_response >= 20)
+
+#isolate summer holiday
+summerData <- labelledData[labelledData[, "holiday"] =="summer holiday",]
+tempsummer <- ddply(summerData,~user_id,summarise,number_of_response=length(unique(created)))
+tempsummer1 <- filter(tempsummer, number_of_response >= 20)
+
+#isolate may holiday
+mayhData <- labelledData[labelledData[, "holiday"] =="may holidays",]
+tempmayh <- ddply(mayhData,~user_id,summarise,number_of_response=length(unique(created)))
+tempmayh1 <- filter(tempmayh, number_of_response >= 20)
+
+#inner join the data
+#inner join the data
+vacationpracticingstudents <- merge(tempsummer1, tempchristmas1,  by="user_id")
+vacationpracticingstudents <- merge(vacationpracticingstudents, tempmayh1,  by="user_id")
+vacationpracticingstudents[is.na(vacationpracticingstudents)] <- 0
+
+colnames(vacationpracticingstudents) <- c("user_id", "nor_summer","nor_christmas","nor_mayh")
+
+#share the file to the group as sample
+write.csv(vacationpracticingstudents, file="samplevalid.csv")
+
+#call all the vacation practicing student data 
+ vacstudent <- merge(x=labelledData[,c("user_id","createddate","created","correct_answered", "response_in_milliseconds","timegroup","holiday","sure","user_domain_rating")],y=vacationpracticingstudents, by = "user_id")
+
+#make plot to show summarized number of response in a day when sure-holiday 	 
+sumvac <- ddply(vacstudent,~createddate,summarise,number_of_response=length(created),isholiday=unique(sure))	 
+
+sumvac$createddate <- date(sumvac$createddate)
+mygraph7 <- ggplot(sumvac, aes(x=createddate, y=number_of_response, fill=factor(isholiday))) + 
+    geom_bar(stat="identity") +
+    theme(axis.text.x = element_text(angle=90, vjust=0.2)) +
+    scale_x_date(date_breaks = "1 week", date_labels = "%d %b %Y")
+mygraph7
+
+
+#####################################END OF YULIE################################################################
+
